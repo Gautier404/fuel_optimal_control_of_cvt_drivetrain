@@ -1,4 +1,5 @@
 import numpy as np
+from figures import plot_throttle_rpm_torque_map, plot_throttle_rpm_power_map, plot_torque_rpm_fuel_consumption_map, plot_power_torque_rpm_curve
 
 engine_torque_map_Nm = np.array(
                         [[45,	90,	107, 109, 110, 111,	114, 116],
@@ -16,39 +17,31 @@ engine_torque_map_Nm = np.array(
 engine_speed_map_rpm = np.array([800, 1300, 1800, 2300, 2800, 3300, 3800, 4300, 4800, 5300, 5800, 6300])
 engine_throttle_map = [5, 10, 20, 30, 40, 50, 60, 100]
 
+engine_throttle_grid, engine_rpm_grid = np.meshgrid(engine_throttle_map, engine_speed_map_rpm, indexing='ij')
+
 engine_power_map_W = engine_torque_map_Nm * engine_speed_map_rpm[:, None] / 60
 
-max_torque = np.max(engine_torque_map_Nm)
+
+
+def get_engine_fuel_consumption_gps(engine_torque_Nm, engine_speed_rpm):
+    """Returns engine fuel consumption in grams/s"""
+    FUEL_CONSUMPTION_CONST = 0.001
+    return engine_torque_Nm * engine_speed_rpm * FUEL_CONSUMPTION_CONST
+
+
 resolution = 100
-torque_linspace = np.linspace(0, max_torque, resolution)
-rpm_linspace = np.linspace(np.min(engine_torque_map_Nm), np.max(engine_torque_map_Nm), resolution)
-engine_fuel_consumption_map_g_s = torque_linspace @ rpm_linspace
-print(engine_fuel_consumption_map_g_s)
+torque_linspace = np.linspace(0, np.max(engine_torque_map_Nm), resolution)
+rpm_linspace = np.linspace(np.min(engine_speed_map_rpm), np.max(engine_speed_map_rpm), resolution)
+engine_fuel_consumption_map_g_s = np.zeros((resolution, resolution))
+for i, torque in enumerate(torque_linspace):
+    for j, rpm in enumerate(rpm_linspace):
+        engine_fuel_consumption_map_g_s[i, j] = get_engine_fuel_consumption_gps(torque, rpm)
+
+# create program that creates a function that interpolates the engine torque map without using scipy
+
 
 if __name__ == '__main__':
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-
-    # throttle & rpm -> torque map
-    torque_map_fig = go.Figure(data=[go.Surface(z=engine_torque_map_Nm, x=engine_throttle_map, y=engine_speed_map_rpm)])
-    torque_map_fig.update_layout(title='torque, rpm, throttle map', xaxis_title='throttle, %', yaxis_title='rpm')
-    torque_map_fig.show()
-
-    # throttle & rpm -> power map
-    power_map_fig = go.Figure(data=[go.Surface(z=engine_power_map_W, x=engine_throttle_map, y=engine_speed_map_rpm)])
-    power_map_fig.update_layout(title = 'power, rpm, throttle map', xaxis_title='throttle, %', yaxis_title='rpm')
-    power_map_fig.show()
-
-    # torque & rpm -> fuel consumption map
-    fuel_consumption_map_fig = go.Figure(data=[go.Surface(z=engine_fuel_consumption_map_g_s, x=torque_linspace, y=rpm_linspace)])
-    fuel_consumption_map_fig.update_layout(title = 'fuel consumption, rpm, torque map', xaxis_title='torque, Nm', yaxis_title='rpm')
-    fuel_consumption_map_fig.show()
-
-    # power, torque, rpm curve
-    power_torque_curve_fig = make_subplots(specs=[[{"secondary_y": True}]])
-    power_torque_curve_fig.add_trace(go.Scatter(x=engine_speed_map_rpm, y=engine_power_map_W[:,-1]/1000, mode='lines', name='power'), secondary_y=True)
-    power_torque_curve_fig.add_trace(go.Scatter(x=engine_speed_map_rpm, y=engine_torque_map_Nm[:,-1], mode='lines', name='torque'), secondary_y=False)
-    power_torque_curve_fig.update_layout(title = 'power, torque, rpm curve', xaxis_title='rpm')
-    power_torque_curve_fig.update_yaxes(title_text="power, kW", secondary_y=False)
-    power_torque_curve_fig.update_yaxes(title_text="torque, Nm", secondary_y=True)
-    power_torque_curve_fig.show()
+    plot_throttle_rpm_torque_map(engine_torque_map_Nm, engine_speed_map_rpm, engine_throttle_map)
+    plot_throttle_rpm_power_map(engine_power_map_W, engine_speed_map_rpm, engine_throttle_map)
+    plot_torque_rpm_fuel_consumption_map(engine_fuel_consumption_map_g_s, torque_linspace, rpm_linspace)
+    plot_power_torque_rpm_curve(engine_power_map_W, engine_torque_map_Nm, engine_speed_map_rpm)
