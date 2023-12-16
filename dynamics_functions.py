@@ -9,7 +9,7 @@ import numpy as np
 
 # Define system constants:
 ENGINE_INERTIA = 100.0          # inertia of the engine & driving clutch of the cvt [kg*m^2]
-DRIVE_ASSEMBLY_RATIO = 0.5      # ratio of the drive assembly (speed of wheels/ speed of cvt output)
+DRIVE_ASSEMBLY_RATIO = 2      # ratio of the drive assembly (speed of wheels/ speed of cvt output)
 VEHICLE_INERTIA = 1000.0        # inertia of the vehicle including the wheels and drivetrain [kg*m^2]
 WHEEL_RADIUS = 0.25             # radius of the wheels [m]
 
@@ -33,8 +33,8 @@ def get_vehicle_resistive_force(vehicle_velocity):
     Arguments:
         vehicle_velocity (float): velocity of the vehicle in meters per second
     """
-    a1 = 0.1
-    a2 = 0.01
+    a1 = 50
+    a2 = 25#100
     return a1 + a2 * vehicle_velocity**2
 
 
