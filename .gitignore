@@ -3,3 +3,5 @@
 __pycache__/
 # Ignore venv directory
 venv/
+# Ignore the graphs directory
+graphs/
